@@ -35,15 +35,8 @@ public:
 };
 class CMesh
 {
-public:
-	CMesh(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
-	virtual ~CMesh();
 private:
 	int m_nReferences = 0;
-public:
-	void AddRef() { m_nReferences++; }
-	void Release() { if (--m_nReferences <= 0) delete this; }
-	void ReleaseUploadBuffers();
 protected:
 	ID3D12Resource* m_pd3dVertexBuffer = NULL;
 	ID3D12Resource* m_pd3dVertexUploadBuffer = NULL;
@@ -53,7 +46,6 @@ protected:
 	UINT m_nVertices = 0;
 	UINT m_nStride = 0;
 	UINT m_nOffset = 0;
-protected:
 	ID3D12Resource* m_pd3dIndexBuffer = NULL;
 	ID3D12Resource* m_pd3dIndexUploadBuffer = NULL;
 	/*인덱스 버퍼(인덱스의 배열)와 인덱스 버퍼를 위한 업로드 버퍼에 대한 인터페이스 포인터이다. 인덱스 버퍼는 정점
@@ -65,11 +57,28 @@ protected:
 	//인덱스 버퍼에서 메쉬를 그리기 위해 사용되는 시작 인덱스이다. 
 	int m_nBaseVertex = 0;
 	//인덱스 버퍼의 인덱스에 더해질 인덱스이다. 
+	//모델 좌표계의 OOBB 바운딩 박스이다.
+	BoundingOrientedBox m_xmBoundingBox;
+	//정점을 픽킹을 위하여 저장한다(정점 버퍼를 Map()하여 읽지 않아도 되도록).
+	CDiffusedVertex* m_pVertices = NULL;
+	// 메쉬의 인덱스를 저장한다(인덱스 버퍼를 Map()하여 읽지 않아도 되도록).
+	UINT* m_pnIndices = NULL;
+		
 public:
+	CMesh(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual ~CMesh();
+	void AddRef() { m_nReferences++; }
+	void Release() { if (--m_nReferences <= 0) delete this; }
+	void ReleaseUploadBuffers();
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList);
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, UINT nInstances);
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, UINT nInstances,
 		D3D12_VERTEX_BUFFER_VIEW d3dInstancingBufferView);
+	BoundingOrientedBox GetBoundingBox() { return(m_xmBoundingBox); }
+	//광선과 메쉬의 교차를 검사하고 교차하는 횟수와 거리를 반환하는 함수이다.
+	int CheckRayIntersection(XMFLOAT3& xmRayPosition, XMFLOAT3& xmRayDirection, float
+		* pfNearHitDistance);
+		
 };
 class CTriangleMesh : public CMesh
 {
@@ -92,4 +101,11 @@ public:
 		* pd3dCommandList, float fWidth = 20.0f, float fHeight = 20.0f, float fDepth = 4.0f,
 		XMFLOAT4 xmf4Color = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f));
 	virtual ~CAirplaneMeshDiffused();
+};
+class CSphereMeshDiffused : public CMesh
+{
+public:
+	CSphereMeshDiffused(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
+		* pd3dCommandList, float fRadius = 2.0f, int nSlices = 20, int nStacks = 20);
+	virtual ~CSphereMeshDiffused();
 };

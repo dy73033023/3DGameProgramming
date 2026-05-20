@@ -241,6 +241,7 @@ CObjectsShader::~CObjectsShader()
 void CObjectsShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
 	* pd3dCommandList)
 {
+	
 }
 D3D12_INPUT_LAYOUT_DESC CObjectsShader::CreateInputLayout()
 {
@@ -360,6 +361,11 @@ void CInstancingShader::UpdateShaderVariables(ID3D12GraphicsCommandList
 void CInstancingShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
 	* pd3dCommandList)
 {
+	CCubeMeshDiffused* pCubeMesh = new CCubeMeshDiffused(pd3dDevice, pd3dCommandList,
+		12.0f, 12.0f, 12.0f);
+	//구 메쉬를 생성한다.
+	CSphereMeshDiffused* pSphereMesh = new CSphereMeshDiffused(pd3dDevice,
+		pd3dCommandList, 6.0f, 20, 20);
 	int xObjects = 10, yObjects = 10, zObjects = 10, i = 0;
 	m_nObjects = (xObjects * 2 + 1) * (yObjects * 2 + 1) * (zObjects * 2 + 1);
 	m_ppObjects = new CGameObject * [m_nObjects];
@@ -374,6 +380,8 @@ void CInstancingShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCom
 			for (int z = -zObjects; z <= zObjects; z++)
 			{
 				pRotatingObject = new CRotatingObject();
+				//직육면체와 구 메쉬를 교대로 배치한다.
+				pRotatingObject->SetMesh((i % 2) ? (CMesh*)pCubeMesh : (CMesh*)pSphereMesh);
 				pRotatingObject->SetPosition(fxPitch * x, fyPitch * y, fzPitch * z);
 				pRotatingObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
 				pRotatingObject->SetRotationSpeed(10.0f * (i % 10));
@@ -381,12 +389,35 @@ void CInstancingShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCom
 			}
 		}
 	}
-	//인스턴싱을 사용하여 렌더링하기 위하여 하나의 게임 객체만 메쉬를 가진다.
-	CCubeMeshDiffused *pCubeMesh = new CCubeMeshDiffused(pd3dDevice, pd3dCommandList,
-	12.0f, 12.0f, 12.0f);
-	m_ppObjects[0]->SetMesh(pCubeMesh);
-	//인스턴싱을 위한 정점 버퍼와 뷰를 생성한다. 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	/////////////////////////////////////////////////////////
+	//int xObjects = 10, yObjects = 10, zObjects = 10, i = 0;
+	//m_nObjects = (xObjects * 2 + 1) * (yObjects * 2 + 1) * (zObjects * 2 + 1);
+	//m_ppObjects = new CGameObject * [m_nObjects];
+	//float fxPitch = 12.0f * 2.5f;
+	//float fyPitch = 12.0f * 2.5f;
+	//float fzPitch = 12.0f * 2.5f;
+	//CRotatingObject* pRotatingObject = NULL;
+	//for (int x = -xObjects; x <= xObjects; x++)
+	//{
+	//	for (int y = -yObjects; y <= yObjects; y++)
+	//	{
+	//		for (int z = -zObjects; z <= zObjects; z++)
+	//		{
+	//			pRotatingObject = new CRotatingObject();
+	//			pRotatingObject->SetPosition(fxPitch * x, fyPitch * y, fzPitch * z);
+	//			pRotatingObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
+	//			pRotatingObject->SetRotationSpeed(10.0f * (i % 10));
+	//			m_ppObjects[i++] = pRotatingObject;
+	//		}
+	//	}
+	//}
+	////인스턴싱을 사용하여 렌더링하기 위하여 하나의 게임 객체만 메쉬를 가진다.
+	//CCubeMeshDiffused *pCubeMesh = new CCubeMeshDiffused(pd3dDevice, pd3dCommandList,
+	//12.0f, 12.0f, 12.0f);
+	//m_ppObjects[0]->SetMesh(pCubeMesh);
+	////인스턴싱을 위한 정점 버퍼와 뷰를 생성한다. 
+	//CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
 void CInstancingShader::ReleaseObjects() {}
@@ -399,4 +430,23 @@ void CInstancingShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCame
 //하나의 정점 데이터를 사용하여 모든 게임 객체(인스턴스)들을 렌더링한다. 
 m_ppObjects[0]->Render(pd3dCommandList, pCamera, m_nObjects,
 	m_d3dInstancingBufferView);
+}
+CGameObject* CInstancingShader::PickObjectByRayIntersection(XMFLOAT3& xmf3PickPosition,
+	XMFLOAT4X4& xmf4x4View, float* pfNearHitDistance)
+{
+	int nIntersected = 0;
+	*pfNearHitDistance = FLT_MAX;
+	float fHitDistance = FLT_MAX;
+	CGameObject* pSelectedObject = NULL;
+	for (int j = 0; j < m_nObjects; j++)
+	{
+		nIntersected = m_ppObjects[j]->PickObjectByRayIntersection(xmf3PickPosition,
+			xmf4x4View, &fHitDistance);
+		if ((nIntersected > 0) && (fHitDistance < *pfNearHitDistance))
+		{
+			*pfNearHitDistance = fHitDistance;
+			pSelectedObject = m_ppObjects[j];
+		}
+	}
+	return(pSelectedObject);
 }

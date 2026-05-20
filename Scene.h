@@ -32,6 +32,8 @@ public:
 	//그래픽 루트 시그너쳐를 생성한다. 
 	ID3D12RootSignature *CreateGraphicsRootSignature(ID3D12Device *pd3dDevice);
 	ID3D12RootSignature* GetGraphicsRootSignature();
+	//씬의 모든 게임 객체들에 대한 마우스 픽킹을 수행한다.
+	CGameObject* PickObjectPointedByCursor(int xClient, int yClient, CCamera* pCamera);
 protected:
 	CInstancingShader* m_pShaders = NULL;
 	int m_nShaders = 0;

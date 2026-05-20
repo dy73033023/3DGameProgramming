@@ -8,12 +8,11 @@ struct CB_GAMEOBJECT_INFO
 
 class CShader
 {
-public:
-	CShader();
-	virtual ~CShader();
 private:
 	int m_nReferences = 0;
 public:
+	CShader();
+	virtual ~CShader();
 	void AddRef() { m_nReferences++; }
 	void Release() { if (--m_nReferences <= 0) delete this; }
 	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout();
@@ -77,6 +76,7 @@ public:
 		* pd3dGraphicsRootSignature);
 	virtual void ReleaseUploadBuffers();
 	virtual void Render(ID3D12GraphicsCommandList * pd3dCommandList, CCamera * pCamera);
+	
 protected:
 	CGameObject** m_ppObjects = NULL;
 	int m_nObjects = 0;
@@ -104,6 +104,9 @@ public:
 		* pd3dCommandList);
 	virtual void ReleaseObjects();
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	//셰이더에 포함되어 있는 모든 게임 객체들에 대한 마우스 픽킹을 수행한다.
+	virtual CGameObject* PickObjectByRayIntersection(XMFLOAT3& xmf3PickPosition,
+		XMFLOAT4X4& xmf4x4View, float* pfNearHitDistance);
 protected:
 	//인스턴스 정점 버퍼와 정점 버퍼 뷰이다. 
 	ID3D12Resource* m_pd3dcbGameObjects = NULL;

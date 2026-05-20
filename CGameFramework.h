@@ -48,6 +48,8 @@ public:
 	CPlayer* m_pPlayer = NULL;//플레이어 객체에 대한 포인터이다.
 	//마지막으로 마우스 버튼을 클릭할 때의 마우스 커서의 위치이다. 
 	POINT m_ptOldCursorPos; 
+	CGameObject* m_pSelectedObject = NULL;
+		
 public:
 	CGameFramework();
 	~CGameFramework();
@@ -71,12 +73,12 @@ public:
 	void WaitForGpuComplete();
 	//CPU와 GPU를 동기화하는 함수이다. 
 	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
-	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM
-		lParam);
+	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	//윈도우의 메시지(키보드, 마우스 입력)를 처리하는 함수이다. 
 	void ChangeSwapChainState();
 	void MoveToNextFrame(); 
+	void ProcessSelectedObject(DWORD dwDirection, float cxDelta, float cyDelta);
 private:
 	//다음은 게임 프레임워크에서 사용할 타이머이다.
 	CGameTimer m_GameTimer;
